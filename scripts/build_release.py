@@ -10,10 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 
 
-def run_build(project: Path, output: Path, no_isolation: bool = False) -> None:
-    options = ["--no-isolation"] if no_isolation else []
+def run_build(project: Path, output: Path) -> None:
     subprocess.run(
-        [sys.executable, "-m", "build", *options, "--wheel", "--outdir", str(output)],
+        [sys.executable, "-m", "build", "--wheel", "--outdir", str(output)],
         cwd=project,
         check=True,
     )
@@ -32,7 +31,7 @@ def main() -> None:
         )
         shutil.rmtree(staging / "src" / "semantra" / "assets" / "multilingual-e5-small")
         run_build(staging, DIST)
-    run_build(ROOT / "packages" / "semantra-multilingual", DIST, no_isolation=True)
+    run_build(ROOT / "packages" / "semantra-multilingual", DIST)
 
 
 if __name__ == "__main__":
