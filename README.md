@@ -334,8 +334,9 @@ Release versions are maintained in both `pyproject.toml` files and documented
 in `CHANGELOG.md`. Run `python scripts/build_release.py` to build the two
 release wheels. GitHub Actions tests Python 3.9–3.13 and publishes tagged
 releases through PyPI Trusted Publishing, without long-lived API tokens. The
-PyPI project `semantra-classify-multilingual` needs its own Trusted Publisher entry for
-the same workflow before the companion wheel can be uploaded.
+The two PyPI projects use separate GitHub workflows so each Trusted Publisher
+can be registered independently: `publish.yml` for the main package and
+`publish-multilingual.yml` for the companion package.
 
 ## License
 
