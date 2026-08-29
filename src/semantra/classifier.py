@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from time import perf_counter
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
@@ -65,6 +66,7 @@ class Classifier:
     def predict(self, query: str, top_k: Optional[int] = None) -> Prediction:
         if not self._examples:
             raise RuntimeError("add at least one class before predicting")
+        started_at = perf_counter()
         text = normalize(query)
         q = self.embedding_model.embed([text])[0].astype(np.float32)
         semantic = self._vector_searcher.similarities(q, self._embeddings)
@@ -90,6 +92,7 @@ class Classifier:
         unknown = confidence < self.config.min_confidence or (
             len(ordered) > 1 and margin < self.config.min_margin
         )
+        inference_time_ms = (perf_counter() - started_at) * 1000.0
         return Prediction(
             None if unknown else best,
             confidence,
@@ -98,6 +101,7 @@ class Classifier:
             margin,
             candidates,
             unknown,
+            inference_time_ms,
         )
 
     def save(self, path: str) -> None:

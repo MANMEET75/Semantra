@@ -23,6 +23,7 @@ def test_public_api_and_unknown():
     c.add_class("speaker", ["speaker has no sound"])
     c.add_class("battery", ["battery will not charge"])
     assert c.predict("sound stopped").class_name == "speaker"
+    assert c.predict("sound stopped").inference_time_ms >= 0
     assert c.predict("something unrelated").is_unknown
 
 

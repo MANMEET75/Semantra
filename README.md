@@ -57,6 +57,7 @@ print(result.confidence)
 print(result.semantic_score)
 print(result.lexical_score)
 print(result.margin)
+print(result.inference_time_ms)  # end-to-end prediction latency in milliseconds
 
 for candidate in result.top_k:
     print(candidate.class_name, candidate.confidence)
@@ -65,6 +66,11 @@ for candidate in result.top_k:
 `confidence` is a normalized ranking score, not a calibrated probability.
 `semantic_score` measures embedding similarity, `lexical_score` measures BM25
 matching, and `margin` is the difference between the top two class scores.
+`inference_time_ms` measures end-to-end `predict()` latency, including query
+embedding and ranking, in milliseconds. It uses two monotonic clock reads and
+does not perform additional inference or searches, so its measurement overhead
+is negligible. For reliable benchmarks, measure multiple calls and report a
+median or percentile rather than relying on one prediction.
 
 ## Unknown and ambiguity handling
 
@@ -150,6 +156,7 @@ for query in [
     print(f"Query: {query}")
     print(f"Class: {result.class_name or 'Unknown'}")
     print(f"Confidence: {result.confidence:.3f}")
+    print(f"Latency: {result.inference_time_ms:.2f} ms")
     print("Top candidates:", [(x.class_name, round(x.confidence, 3)) for x in result.top_k])
     print()
 ```

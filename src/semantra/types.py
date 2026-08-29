@@ -19,6 +19,7 @@ class Prediction:
     margin: float
     top_k: List[PredictionCandidate]
     is_unknown: bool
+    inference_time_ms: float
 
     @property
     def label(self) -> Optional[str]:
