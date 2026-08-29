@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 - 2026-08-29
+
+- Split PyPI distribution into `semantra` and `semantra-multilingual` wheels.
+- Add concurrent-safe lazy model initialization.
+- Keep the public `from semantra import Classifier` API unchanged.
+
 ## 0.1.0 - 2026-08-29
 
 - Initial offline hybrid semantic classifier.

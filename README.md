@@ -15,7 +15,14 @@ ambiguous input can return `Unknown` instead of receiving an unreliable label.
 pip install semantra
 ```
 
-The wheel includes the bundled model and tokenizer assets. After installation,
+The main wheel includes the fast English model and tokenizer assets. To use
+the multilingual model from PyPI, install the companion asset package too:
+
+```bash
+pip install semantra semantra-multilingual
+```
+
+Both distributions use the same `semantra` Python API. After installation,
 inference does not require internet access, an API key, a model server, or a
 database. The default English model is distributed under Apache-2.0. A
 multilingual mode is available for mixed-language and Hinglish input.
@@ -139,6 +146,15 @@ The first prediction may be slower because ONNX Runtime initializes the local
 model. Call `predict()` once during application startup if predictable request
 latency matters. Class examples are embedded when added, so they should be
 loaded once and reused rather than rebuilding the classifier for every query.
+
+### Concurrency
+
+After classes have been registered, a classifier can be shared by concurrent
+read-only prediction requests. Semantra protects one-time model initialization
+and ONNX Runtime handles concurrent inference calls. Do not call `add_class()`
+while another thread is predicting; finish configuration first, then share the
+classifier across worker threads or requests. If classes must change at
+runtime, build a new classifier and swap it into the application atomically.
 
 ## Practical use cases
 
@@ -287,10 +303,11 @@ restored = Classifier.load("colab-classifier.json")
 print(restored.predict("I am unable to access my profile").class_name)
 ```
 
-For a multilingual Colab smoke test, use `Classifier(model="multilingual")`
-and add a few equivalent examples in English, Hindi, and Hinglish. The GitHub
-repository stores the large ONNX asset with Git LFS; installing from a released
-PyPI wheel is the simplest offline path once a release is published.
+For a multilingual Colab smoke test from GitHub, use the repository install
+shown above and `Classifier(model="multilingual")`. For PyPI, install both
+`semantra` and `semantra-multilingual`. The multilingual asset package is
+separate so each PyPI wheel remains within the file-size limit; both model
+packages execute fully offline after installation.
 
 ## Design and performance
 
@@ -313,9 +330,12 @@ ruff check src tests
 python -m build
 ```
 
-Release versions are maintained in `pyproject.toml` and documented in
-`CHANGELOG.md`. GitHub Actions tests Python 3.9–3.13 and publishes tagged
-releases through PyPI Trusted Publishing, without long-lived API tokens.
+Release versions are maintained in both `pyproject.toml` files and documented
+in `CHANGELOG.md`. Run `python scripts/build_release.py` to build the two
+release wheels. GitHub Actions tests Python 3.9–3.13 and publishes tagged
+releases through PyPI Trusted Publishing, without long-lived API tokens. The
+PyPI project `semantra-multilingual` needs its own Trusted Publisher entry for
+the same workflow before the companion wheel can be uploaded.
 
 ## License
 

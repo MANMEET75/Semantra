@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 
 from semantra import Classifier
@@ -46,3 +48,12 @@ def test_multilingual_model_selection_without_language_detection():
     assert classifier.embedding_model.model_name == "multilingual"
     assert classifier.embedding_model.query_prefix == "query: "
     assert classifier.embedding_model.document_prefix == "passage: "
+
+
+def test_predictions_are_safe_for_concurrent_reads():
+    classifier = Classifier(FakeEmbedding())
+    classifier.add_class("speaker", ["speaker has no sound"])
+    classifier.add_class("battery", ["battery will not charge"])
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(classifier.predict, ["sound stopped"] * 32))
+    assert all(result.class_name == "speaker" for result in results)

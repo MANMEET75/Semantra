@@ -1,7 +1,19 @@
 from pathlib import Path
+from threading import Lock
 from typing import Optional, Sequence
 
 import numpy as np
+
+
+def _multilingual_asset_dir() -> Path:
+    try:
+        from semantra_multilingual import get_asset_dir
+    except ImportError as exc:
+        raise RuntimeError(
+            "Multilingual assets are not installed. Install semantra-multilingual "
+            "or install Semantra directly from GitHub."
+        ) from exc
+    return Path(get_asset_dir())
 
 
 class OnnxEmbeddingModel:
@@ -21,30 +33,39 @@ class OnnxEmbeddingModel:
         self.query_prefix = "query: " if model_name == "multilingual" else ""
         self.document_prefix = "passage: " if model_name == "multilingual" else ""
         self._session = None
+        self._load_lock = Lock()
         self.dimension = 384
 
     def _load(self):
         if self._session is not None:
             return
-        model = self.model_dir / "onnx" / "model.onnx"
-        if not model.exists():
-            raise RuntimeError(
-                "Bundled ONNX model assets are missing. Install a complete Semantra wheel "
-                "or pass a custom EmbeddingModel."
-            )
-        try:
-            import onnxruntime as ort
-            from tokenizers import Tokenizer
-        except ImportError as exc:
-            raise RuntimeError(
-                "onnxruntime and tokenizers are required for the default embedding model"
-            ) from exc
-        self._session = ort.InferenceSession(str(model), providers=["CPUExecutionProvider"])
-        tokenizer_file = self.model_dir / "tokenizer.json"
-        if not tokenizer_file.exists():
-            raise RuntimeError("Bundled tokenizer assets are missing")
-        self._tokenizer = Tokenizer.from_file(str(tokenizer_file))
-        self._tokenizer.enable_truncation(max_length=256)
+        with self._load_lock:
+            if self._session is not None:
+                return
+            model = self.model_dir / "onnx" / "model.onnx"
+            if self.model_name == "multilingual" and not model.exists():
+                self.model_dir = _multilingual_asset_dir()
+                model = self.model_dir / "onnx" / "model.onnx"
+            if not model.exists():
+                raise RuntimeError(
+                    "Bundled ONNX model assets are missing. Install the matching Semantra "
+                    "model package or pass a custom EmbeddingModel."
+                )
+            try:
+                import onnxruntime as ort
+                from tokenizers import Tokenizer
+            except ImportError as exc:
+                raise RuntimeError(
+                    "onnxruntime and tokenizers are required for the default embedding model"
+                ) from exc
+            session = ort.InferenceSession(str(model), providers=["CPUExecutionProvider"])
+            tokenizer_file = self.model_dir / "tokenizer.json"
+            if not tokenizer_file.exists():
+                raise RuntimeError("Bundled tokenizer assets are missing")
+            tokenizer = Tokenizer.from_file(str(tokenizer_file))
+            tokenizer.enable_truncation(max_length=256)
+            self._session = session
+            self._tokenizer = tokenizer
 
     def _embed(self, texts: Sequence[str]) -> np.ndarray:
         self._load()

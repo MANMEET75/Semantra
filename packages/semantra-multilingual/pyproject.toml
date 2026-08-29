@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semantra-multilingual"
+version = "0.3.0"
+description = "Offline multilingual model assets for Semantra."
+requires-python = ">=3.9,<3.14"
+license = "Apache-2.0"
+dependencies = ["semantra>=0.3.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+semantra_multilingual = ["assets/**/*"]
