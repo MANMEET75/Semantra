@@ -179,7 +179,7 @@ python -m build
 ```
 
 Release versions are maintained in `pyproject.toml` and documented in
-`CHANGELOG.md`. GitHub Actions tests Python 3.9–3.12 and publishes tagged
+`CHANGELOG.md`. GitHub Actions tests Python 3.9–3.13 and publishes tagged
 releases through PyPI Trusted Publishing, without long-lived API tokens.
 
 ## License
