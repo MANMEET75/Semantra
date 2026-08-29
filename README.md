@@ -15,7 +15,7 @@ ambiguous input can return `Unknown` instead of receiving an unreliable label.
 pip install semantra
 ```
 
-The wheel includes the selected model and tokenizer assets. After installation,
+The wheel includes the bundled model and tokenizer assets. After installation,
 inference does not require internet access, an API key, a model server, or a
 database. The default English model is distributed under Apache-2.0. A
 multilingual mode is available for mixed-language and Hinglish input.
@@ -74,11 +74,92 @@ stage. The multilingual model is larger than the English model, so its model
 inference can be slower and use more memory; always benchmark on the target
 CPU using `result.inference_time_ms`.
 
-The multilingual model is based on XLM-R and is intended for roughly 100
-languages. Coverage and accuracy are not uniform, especially for low-resource
-languages. For best results, provide examples in each language and spelling
-style you expect in production. Code-switching such as Hinglish is supported
-without any special configuration.
+The multilingual model is based on XLM-R and is trained for 100 languages.
+Commonly used supported languages include English, Hindi, Urdu, Bengali,
+Gujarati, Marathi, Punjabi, Tamil, Telugu, Kannada, Malayalam, Nepali,
+Arabic, Persian, Hebrew, Turkish, Russian, Ukrainian, Polish, Czech, Slovak,
+Romanian, Hungarian, Bulgarian, Greek, German, Dutch, Danish, Swedish,
+Norwegian, Finnish, French, Spanish, Portuguese, Italian, Catalan, Indonesian,
+Malay, Vietnamese, Thai, Chinese, Japanese, and Korean. See the
+[official multilingual-E5 model card](https://huggingface.co/intfloat/multilingual-e5-small)
+for the authoritative language list and model details.
+
+Hinglish is code-switched Hindi and English rather than a separate model
+language. It is supported naturally because the same multilingual encoder sees
+both scripts and the same Unicode-aware lexical matcher sees words such as
+`account`, `login`, `nahi`, and `रहा`. Romanized Hindi spelling is variable, so
+include the spellings your users actually write in the examples.
+
+Language support means the model can process text in those languages; it does
+not guarantee identical accuracy for every language. Performance may be lower
+for low-resource languages, short inputs, slang, transliteration, or domains
+that are absent from the examples. For production quality, provide several
+representative examples per class in every language and writing style you
+expect, then validate with a held-out test set.
+
+## Choosing a model and understanding latency
+
+Semantra performs no language detection, translation, or second inference
+stage. Model selection happens when `Classifier` is created:
+
+```python
+english = Classifier(model="english")       # default: smaller and faster
+multilingual = Classifier(model="multilingual")  # mixed languages/Hinglish
+```
+
+Both modes use the same pipeline and expose the same `Prediction` object. The
+reported `inference_time_ms` includes query embedding, semantic similarity,
+BM25 scoring, score fusion, ranking, and threshold checks. It does not add a
+second model call or a separate timing pass; measuring the time uses only two
+monotonic clock reads.
+
+The multilingual model has more model data than the English MiniLM model, so
+it normally requires more memory and can have higher CPU inference latency.
+There is no single fixed latency number: CPU model, thread settings, query
+length, number of examples, and warm-up all affect it. Benchmark on the
+deployment machine after one warm-up call:
+
+```python
+from statistics import median
+from semantra import Classifier
+
+def benchmark(model_name):
+    c = Classifier(model=model_name)
+    c.add_class("support", ["I need help", "Mujhe madad chahiye"])
+    c.add_class("billing", ["I have a payment question", "Payment ko lekar sawal hai"])
+    c.predict("I need help")  # warm-up: excludes first-load cost
+    times = [c.predict("Mujhe help chahiye").inference_time_ms for _ in range(30)]
+    return median(times)
+
+print("English median:", benchmark("english"), "ms")
+print("Multilingual median:", benchmark("multilingual"), "ms")
+```
+
+The first prediction may be slower because ONNX Runtime initializes the local
+model. Call `predict()` once during application startup if predictable request
+latency matters. Class examples are embedded when added, so they should be
+loaded once and reused rather than rebuilding the classifier for every query.
+
+## Practical use cases
+
+Semantra is suitable when a small set of labeled examples is available but
+training a dedicated model is unnecessary:
+
+- Customer-support intent routing across teams such as access, billing,
+  delivery, returns, or technical support.
+- Helpdesk and IT ticket triage for password, device, network, and software
+  issues.
+- Multilingual chatbot or AI-agent routing before a downstream workflow runs.
+- FAQ and knowledge-base category selection using examples written by domain
+  experts.
+- Contact-center message tagging, escalation detection, and human handoff.
+- Form, email, or feedback classification where an `Unknown` result is safer
+  than forcing an incorrect class.
+
+Semantra is not a replacement for supervised training when you have a large,
+stable labeled dataset, strict regulatory calibration requirements, or highly
+specialized language. Use the confidence and margin thresholds, inspect
+`top_k`, and route uncertain predictions to clarification or human review.
 
 ## Prediction results
 

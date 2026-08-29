@@ -12,3 +12,4 @@
 - Support Unicode-aware BM25 matching for Hindi, Hinglish, and other scripts.
 - Persist and restore the selected built-in model mode.
 - Document language coverage, latency characteristics, and multilingual usage.
+- Expand README guidance with language coverage, benchmarking, and production use cases.
