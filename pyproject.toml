@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semantra"
+version = "0.1.0"
+description = "Offline hybrid semantic and lexical few-shot classification."
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+license = "Apache-2.0"
+authors = [{ name = "Semantra contributors" }]
+keywords = ["classification", "semantic-search", "few-shot", "bm25", "offline"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = ["numpy>=1.23", "onnxruntime>=1.16", "tokenizers>=0.19"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "mypy>=1.5", "ruff>=0.4", "build>=1.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+semantra = ["assets/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

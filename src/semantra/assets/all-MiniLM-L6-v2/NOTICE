@@ -1,0 +1,4 @@
+Model: all-MiniLM-L6-v2 ONNX export
+Source: https://huggingface.co/onnx-community/all-MiniLM-L6-v2-ONNX
+License: Apache-2.0
+
