@@ -17,6 +17,12 @@ class FakeEmbedding:
             dtype=np.float32,
         )
 
+    def embed_documents(self, texts):
+        return self.embed(texts)
+
+    def embed_query(self, text):
+        return self.embed([text])[0]
+
 
 def test_public_api_and_unknown():
     c = Classifier(FakeEmbedding())
@@ -33,3 +39,10 @@ def test_save_load(tmp_path):
     c.save(str(path))
     loaded = Classifier.load(str(path), FakeEmbedding())
     assert loaded.predict("sound").class_name == "speaker"
+
+
+def test_multilingual_model_selection_without_language_detection():
+    classifier = Classifier(model="multilingual")
+    assert classifier.embedding_model.model_name == "multilingual"
+    assert classifier.embedding_model.query_prefix == "query: "
+    assert classifier.embedding_model.document_prefix == "passage: "

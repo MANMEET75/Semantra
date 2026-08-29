@@ -1,13 +1,19 @@
 import re
+import unicodedata
 from typing import List
 
-_TOKEN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
+# ``\w`` omits combining marks used by scripts such as Devanagari. Include
+# Unicode combining marks explicitly so lexical matching does not split words.
+_TOKEN = re.compile(
+    r"(?:[^\W_]|[\u0300-\u036f\u0900-\u097f])+(?:['’](?:[^\W_]|[\u0300-\u036f\u0900-\u097f])+)?",
+    re.UNICODE,
+)
 
 
 def normalize(text: str) -> str:
     if not isinstance(text, str) or not text.strip():
         raise ValueError("text must be a non-empty string")
-    return " ".join(text.casefold().split())
+    return " ".join(unicodedata.normalize("NFKC", text.casefold()).split())
 
 
 def tokenize(text: str) -> List[str]:

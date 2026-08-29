@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "semantra"
-version = "0.1.0"
+version = "0.2.0"
 description = "Offline hybrid semantic and lexical few-shot classification."
 readme = "README.md"
 requires-python = ">=3.9,<3.14"
 license = "Apache-2.0"
 authors = [{ name = "Semantra contributors" }]
-keywords = ["classification", "semantic-search", "few-shot", "bm25", "offline"]
+keywords = ["classification", "semantic-search", "few-shot", "bm25", "offline", "multilingual"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python :: 3",

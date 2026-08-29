@@ -4,8 +4,8 @@ Semantra is an offline, few-shot classification engine for Python. Define a
 set of classes with example sentences and classify new text without training a
 model, fine-tuning, hosted APIs, or a vector database.
 
-It combines local semantic embeddings from the bundled open-source MiniLM
-ONNX model with pure-Python BM25 lexical matching. The scores are fused at
+It combines local semantic embeddings from a bundled open-source ONNX model
+with pure-Python BM25 lexical matching. The scores are fused at
 class level and checked with confidence and runner-up margin thresholds, so
 ambiguous input can return `Unknown` instead of receiving an unreliable label.
 
@@ -15,9 +15,10 @@ ambiguous input can return `Unknown` instead of receiving an unreliable label.
 pip install semantra
 ```
 
-The wheel includes the model and tokenizer assets. After installation,
+The wheel includes the selected model and tokenizer assets. After installation,
 inference does not require internet access, an API key, a model server, or a
-database. The bundled model is English-first and distributed under Apache-2.0.
+database. The default English model is distributed under Apache-2.0. A
+multilingual mode is available for mixed-language and Hinglish input.
 
 ## Quick start
 
@@ -45,6 +46,39 @@ result = classifier.predict("I have been locked out of my profile")
 print(result.class_name)   # account_access
 print(result.confidence)   # normalized confidence score
 ```
+
+### Multilingual and Hinglish input
+
+Use the bundled multilingual model when examples and queries may contain
+Hindi, English, Hinglish, or other supported languages:
+
+```python
+from semantra import Classifier
+
+classifier = Classifier(model="multilingual")
+classifier.add_class("account_access", [
+    "I cannot sign in to my account",
+    "Mera account login nahi ho raha",
+    "मेरा अकाउंट लॉगिन नहीं हो रहा",
+])
+
+result = classifier.predict("Mera account access nahi ho raha")
+print(result.class_name, result.confidence)
+```
+
+This mode does not run a language detector, translator, or second classifier:
+the multilingual embedder handles the normalized input in the same single
+embedding call, while the Unicode-aware BM25 matcher uses the same text. This
+keeps the pipeline simple and avoids an extra language-processing latency
+stage. The multilingual model is larger than the English model, so its model
+inference can be slower and use more memory; always benchmark on the target
+CPU using `result.inference_time_ms`.
+
+The multilingual model is based on XLM-R and is intended for roughly 100
+languages. Coverage and accuracy are not uniform, especially for low-resource
+languages. For best results, provide examples in each language and spelling
+style you expect in production. Code-switching such as Hinglish is supported
+without any special configuration.
 
 ## Prediction results
 
@@ -104,6 +138,11 @@ result = restored.predict("Please update the address for my order")
 
 Persistence stores the examples, configuration, and precomputed embeddings.
 The model remains local and is used only to embed new queries.
+
+The selected built-in model is saved with the classifier metadata, so loading
+a multilingual classifier automatically restores multilingual mode. You can
+override it with `Classifier.load("classifier.json", model="english")` when
+using a compatible persisted embedding matrix.
 
 ## Custom components
 
@@ -167,6 +206,11 @@ restored = Classifier.load("colab-classifier.json")
 print(restored.predict("I am unable to access my profile").class_name)
 ```
 
+For a multilingual Colab smoke test, use `Classifier(model="multilingual")`
+and add a few equivalent examples in English, Hindi, and Hinglish. The GitHub
+repository stores the large ONNX asset with Git LFS; installing from a released
+PyPI wheel is the simplest offline path once a release is published.
+
 ## Design and performance
 
 - No training or fine-tuning is required.
@@ -175,6 +219,9 @@ print(restored.predict("I am unable to access my profile").class_name)
 - BM25 operates in memory over the supplied example corpus.
 - The default design targets small-to-medium few-shot corpora and low-latency
   application routing.
+- `model="english"` is the fastest, smallest built-in option; use
+  `model="multilingual"` when language coverage is more important than model
+  size.
 
 ## Development and releases
 

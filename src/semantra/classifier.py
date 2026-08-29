@@ -24,8 +24,9 @@ class Classifier:
         lexical_searcher=None,
         vector_searcher=None,
         score_fusion=None,
+        model: str = "english",
     ):
-        self.embedding_model = embedding_model or OnnxEmbeddingModel()
+        self.embedding_model = embedding_model or OnnxEmbeddingModel(model_name=model)
         self.config = config or ClassifierConfig()
         self._classes: Dict[str, List[str]] = {}
         self._examples: List[str] = []
@@ -60,7 +61,10 @@ class Classifier:
             self._bm25 = BM25(self._examples)
         else:
             self._bm25.fit(self._examples)
-        self._embeddings = self.embedding_model.embed(self._examples).astype(np.float32)
+        embed_documents = getattr(
+            self.embedding_model, "embed_documents", self.embedding_model.embed
+        )
+        self._embeddings = embed_documents(self._examples).astype(np.float32)
         return self
 
     def predict(self, query: str, top_k: Optional[int] = None) -> Prediction:
@@ -68,7 +72,10 @@ class Classifier:
             raise RuntimeError("add at least one class before predicting")
         started_at = perf_counter()
         text = normalize(query)
-        q = self.embedding_model.embed([text])[0].astype(np.float32)
+        if hasattr(self.embedding_model, "embed_query"):
+            q = self.embedding_model.embed_query(text).astype(np.float32)
+        else:
+            q = self.embedding_model.embed([text])[0].astype(np.float32)
         semantic = self._vector_searcher.similarities(q, self._embeddings)
         lexical = np.asarray(self._bm25.scores(text))
         scores = {}
@@ -107,6 +114,7 @@ class Classifier:
     def save(self, path: str) -> None:
         data = {
             "format_version": 1,
+            "model": getattr(self.embedding_model, "model_name", None),
             "config": self.config.__dict__,
             "classes": self._classes,
             "examples": self._examples,
@@ -116,11 +124,16 @@ class Classifier:
         Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     @classmethod
-    def load(cls, path: str, embedding_model=None) -> "Classifier":
+    def load(cls, path: str, embedding_model=None, model: Optional[str] = None) -> "Classifier":
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         if data.get("format_version") != 1:
             raise ValueError("unsupported Semantra persistence format")
-        instance = cls(embedding_model=embedding_model, config=ClassifierConfig(**data["config"]))
+        selected_model = model or data.get("model") or "english"
+        instance = cls(
+            embedding_model=embedding_model,
+            config=ClassifierConfig(**data["config"]),
+            model=selected_model,
+        )
         instance._classes = {
             str(name): list(examples) for name, examples in data["classes"].items()
         }
