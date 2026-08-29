@@ -10,7 +10,7 @@ def _multilingual_asset_dir() -> Path:
         from semantra_multilingual import get_asset_dir
     except ImportError as exc:
         raise RuntimeError(
-            "Multilingual assets are not installed. Install semantra-multilingual "
+            "Multilingual assets are not installed. Install semantra-classify-multilingual "
             "or install Semantra directly from GitHub."
         ) from exc
     return Path(get_asset_dir())

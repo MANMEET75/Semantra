@@ -12,14 +12,14 @@ ambiguous input can return `Unknown` instead of receiving an unreliable label.
 ## Installation
 
 ```bash
-pip install semantra
+pip install semantra-classify
 ```
 
 The main wheel includes the fast English model and tokenizer assets. To use
 the multilingual model from PyPI, install the companion asset package too:
 
 ```bash
-pip install semantra semantra-multilingual
+pip install semantra-classify semantra-classify-multilingual
 ```
 
 Both distributions use the same `semantra` Python API. After installation,
@@ -265,7 +265,7 @@ Until a PyPI release is published, install directly from GitHub in a fresh
 Google Colab notebook:
 
 ```python
-!pip install -q "git+https://github.com/MANMEET75/Semantra.git"
+!pip install -q "git+https://github.com/MANMEET75/semantra-classify.git"
 ```
 
 ```python
@@ -305,7 +305,7 @@ print(restored.predict("I am unable to access my profile").class_name)
 
 For a multilingual Colab smoke test from GitHub, use the repository install
 shown above and `Classifier(model="multilingual")`. For PyPI, install both
-`semantra` and `semantra-multilingual`. The multilingual asset package is
+`semantra-classify` and `semantra-classify-multilingual`. The multilingual asset package is
 separate so each PyPI wheel remains within the file-size limit; both model
 packages execute fully offline after installation.
 
@@ -334,7 +334,7 @@ Release versions are maintained in both `pyproject.toml` files and documented
 in `CHANGELOG.md`. Run `python scripts/build_release.py` to build the two
 release wheels. GitHub Actions tests Python 3.9–3.13 and publishes tagged
 releases through PyPI Trusted Publishing, without long-lived API tokens. The
-PyPI project `semantra-multilingual` needs its own Trusted Publisher entry for
+PyPI project `semantra-classify-multilingual` needs its own Trusted Publisher entry for
 the same workflow before the companion wheel can be uploaded.
 
 ## License

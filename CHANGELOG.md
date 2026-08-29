@@ -2,7 +2,7 @@
 
 ## 0.3.0 - 2026-08-29
 
-- Split PyPI distribution into `semantra` and `semantra-multilingual` wheels.
+- Split PyPI distribution into `semantra-classify` and `semantra-classify-multilingual` wheels.
 - Add concurrent-safe lazy model initialization.
 - Keep the public `from semantra import Classifier` API unchanged.
 
